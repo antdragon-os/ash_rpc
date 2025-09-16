@@ -39,14 +39,21 @@ if Code.ensure_loaded?(Igniter) do
       {igniter, status} = create_trpc_router_smart(igniter, trpc_router_module, status)
 
       # Update the router using a simple patch approach with status tracking
-      {igniter, status} = update_router_with_patch_smart(igniter, web_module_name, trpc_router_module, auth_enabled?, app_name, status)
+      {igniter, status} =
+        update_router_with_patch_smart(
+          igniter,
+          web_module_name,
+          trpc_router_module,
+          auth_enabled?,
+          app_name,
+          status
+        )
 
       # Report status to user
       report_status(status, trpc_router_module)
 
       igniter
     end
-
 
     defp create_trpc_router_smart(igniter, trpc_router_module, status) do
       app_name = Atom.to_string(Mix.Project.config()[:app])
@@ -62,10 +69,43 @@ if Code.ensure_loaded?(Igniter) do
             end
             """
 
-            if String.trim(content) == String.trim(expected_content) do
-              {igniter, Map.update!(status, :skipped, &["#{inspect(trpc_router_module)} module (already exists with correct content)" | &1])}
+            # Check if content has the double defmodule issue
+            has_double_defmodule =
+              String.contains?(content, "defmodule #{inspect(trpc_router_module)} do") &&
+                String.contains?(content, "\n  defmodule #{inspect(trpc_router_module)} do")
+
+            if has_double_defmodule do
+              # Fix the double defmodule issue by replacing the entire file
+              File.write!(file_path, expected_content)
+
+              {igniter,
+               Map.update!(
+                 status,
+                 :updated,
+                 &["#{inspect(trpc_router_module)} module (fixed double defmodule issue)" | &1]
+               )}
             else
-              {igniter, Map.update!(status, :skipped, &["#{inspect(trpc_router_module)} module (exists with different content, keeping existing)" | &1])}
+              if String.trim(content) == String.trim(expected_content) do
+                {igniter,
+                 Map.update!(
+                   status,
+                   :skipped,
+                   &[
+                     "#{inspect(trpc_router_module)} module (already exists with correct content)"
+                     | &1
+                   ]
+                 )}
+              else
+                # Replace with correct content
+                File.write!(file_path, expected_content)
+
+                {igniter,
+                 Map.update!(
+                   status,
+                   :updated,
+                   &["#{inspect(trpc_router_module)} module (updated existing content)" | &1]
+                 )}
+              end
             end
 
           {:error, _} ->
@@ -73,17 +113,25 @@ if Code.ensure_loaded?(Igniter) do
         end
       else
         # File doesn't exist, create it
-        igniter = Igniter.Project.Module.create_module(igniter, trpc_router_module, """
-        defmodule #{inspect(trpc_router_module)} do
-          use AshRpc.Web.Router, domains: []
-        end
-        """)
+        igniter =
+          Igniter.Project.Module.create_module(igniter, trpc_router_module, """
+          defmodule #{inspect(trpc_router_module)} do
+            use AshRpc.Web.Router, domains: []
+          end
+          """)
+
         {igniter, Map.update!(status, :created, &["#{inspect(trpc_router_module)} module" | &1])}
       end
     end
 
-
-    defp update_router_with_patch_smart(igniter, _web_module_name, trpc_router_module, auth_enabled?, app_name, status) do
+    defp update_router_with_patch_smart(
+           igniter,
+           _web_module_name,
+           trpc_router_module,
+           auth_enabled?,
+           app_name,
+           status
+         ) do
       # Construct router path manually to avoid Igniter API issues
       router_path = Path.join(["lib", "#{app_name}_web", "router.ex"])
 
@@ -96,15 +144,30 @@ if Code.ensure_loaded?(Igniter) do
       # Read and analyze the router file
       case File.read(router_path) do
         {:ok, content} ->
-          {updated_content, pipeline_added?, scope_added?} = update_router_content_smart(content, pipeline_code, scope_code)
+          {updated_content, pipeline_added?, scope_added?} =
+            update_router_content_smart(content, pipeline_code, scope_code)
 
           if pipeline_added? or scope_added? do
             File.write!(router_path, updated_content)
-            status = if pipeline_added?, do: Map.update!(status, :created, &["tRPC pipeline in router" | &1]), else: status
-            status = if scope_added?, do: Map.update!(status, :created, &["tRPC route forwarding in router" | &1]), else: status
+
+            status =
+              if pipeline_added?,
+                do: Map.update!(status, :created, &["tRPC pipeline in router" | &1]),
+                else: status
+
+            status =
+              if scope_added?,
+                do: Map.update!(status, :created, &["tRPC route forwarding in router" | &1]),
+                else: status
+
             {igniter, status}
           else
-            {igniter, Map.update!(status, :skipped, &["Router configuration (already properly configured)" | &1])}
+            {igniter,
+             Map.update!(
+               status,
+               :skipped,
+               &["Router configuration (already properly configured)" | &1]
+             )}
           end
 
         {:error, reason} ->
@@ -147,28 +210,28 @@ if Code.ensure_loaded?(Igniter) do
       """
     end
 
-
     defp update_router_content_smart(content, pipeline_code, scope_code) do
       {content, pipeline_added} = add_pipeline_if_missing_smart(content, pipeline_code)
       {content, scope_added} = add_scope_if_missing_smart(content, scope_code)
       {content, pipeline_added, scope_added}
     end
 
-
     defp add_pipeline_if_missing_smart(content, pipeline_code) do
       if String.contains?(content, "pipeline :ash_rpc do") do
         {content, false}
       else
-        new_content = if String.contains?(content, "pipeline :api do") do
-          String.replace(
-            content,
-            ~r/(  pipeline :api do\n.*?\n  end\n)/s,
-            "\\1\n#{pipeline_code}"
-          )
-        else
-          # Fallback: insert before the first scope
-          String.replace(content, ~r/(  scope "\/")/, "#{pipeline_code}\n\n  \\1")
-        end
+        new_content =
+          if String.contains?(content, "pipeline :api do") do
+            String.replace(
+              content,
+              ~r/(  pipeline :api do\n.*?\n  end\n)/s,
+              "\\1\n#{pipeline_code}"
+            )
+          else
+            # Fallback: insert before the first scope
+            String.replace(content, ~r/(  scope "\/")/, "#{pipeline_code}\n\n  \\1")
+          end
+
         {new_content, true}
       end
     end
@@ -177,16 +240,18 @@ if Code.ensure_loaded?(Igniter) do
       if String.contains?(content, "scope \"/trpc\"") do
         {content, false}
       else
-        new_content = if String.contains?(content, "pipeline :ash_rpc do") do
-          String.replace(
-            content,
-            ~r/(pipeline :ash_rpc do\n.*?\n  end\n)/s,
-            "\\1\n#{scope_code}"
-          )
-        else
-          # Fallback: append to end
-          content <> "\n#{scope_code}"
-        end
+        new_content =
+          if String.contains?(content, "pipeline :ash_rpc do") do
+            String.replace(
+              content,
+              ~r/(pipeline :ash_rpc do\n.*?\n  end\n)/s,
+              "\\1\n#{scope_code}"
+            )
+          else
+            # Fallback: append to end
+            content <> "\n#{scope_code}"
+          end
+
         {new_content, true}
       end
     end
@@ -197,6 +262,7 @@ if Code.ensure_loaded?(Igniter) do
 
       unless Enum.empty?(status.created) do
         Mix.shell().info("\n✅ Created:")
+
         Enum.each(Enum.reverse(status.created), fn item ->
           Mix.shell().info("  • #{item}")
         end)
@@ -204,6 +270,7 @@ if Code.ensure_loaded?(Igniter) do
 
       unless Enum.empty?(status.updated) do
         Mix.shell().info("\n🔄 Updated:")
+
         Enum.each(Enum.reverse(status.updated), fn item ->
           Mix.shell().info("  • #{item}")
         end)
@@ -211,13 +278,18 @@ if Code.ensure_loaded?(Igniter) do
 
       unless Enum.empty?(status.skipped) do
         Mix.shell().info("\n⏭️  Skipped:")
+
         Enum.each(Enum.reverse(status.skipped), fn item ->
           Mix.shell().info("  • #{item}")
         end)
       end
 
       Mix.shell().info("\n📝 Next steps:")
-      Mix.shell().info("  • Add your Ash domains to the #{inspect(trpc_router_module)} domains list")
+
+      Mix.shell().info(
+        "  • Add your Ash domains to the #{inspect(trpc_router_module)} domains list"
+      )
+
       Mix.shell().info("  • Configure your frontend to connect to /trpc")
 
       if Enum.empty?(status.created) and Enum.empty?(status.updated) do
