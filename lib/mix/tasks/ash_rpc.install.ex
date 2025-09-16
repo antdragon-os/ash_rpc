@@ -69,43 +69,25 @@ if Code.ensure_loaded?(Igniter) do
             end
             """
 
-            # Check if content has the double defmodule issue
-            has_double_defmodule =
-              String.contains?(content, "defmodule #{inspect(trpc_router_module)} do") &&
-                String.contains?(content, "\n  defmodule #{inspect(trpc_router_module)} do")
-
-            if has_double_defmodule do
-              # Fix the double defmodule issue by replacing the entire file
+            if String.trim(content) == String.trim(expected_content) do
+              {igniter,
+               Map.update!(
+                 status,
+                 :skipped,
+                 &[
+                   "#{inspect(trpc_router_module)} module (already exists with correct content)"
+                   | &1
+                 ]
+               )}
+            else
               File.write!(file_path, expected_content)
 
               {igniter,
                Map.update!(
                  status,
                  :updated,
-                 &["#{inspect(trpc_router_module)} module (fixed double defmodule issue)" | &1]
+                 &["#{inspect(trpc_router_module)} module (updated existing content)" | &1]
                )}
-            else
-              if String.trim(content) == String.trim(expected_content) do
-                {igniter,
-                 Map.update!(
-                   status,
-                   :skipped,
-                   &[
-                     "#{inspect(trpc_router_module)} module (already exists with correct content)"
-                     | &1
-                   ]
-                 )}
-              else
-                # Replace with correct content
-                File.write!(file_path, expected_content)
-
-                {igniter,
-                 Map.update!(
-                   status,
-                   :updated,
-                   &["#{inspect(trpc_router_module)} module (updated existing content)" | &1]
-                 )}
-              end
             end
 
           {:error, _} ->
@@ -115,9 +97,7 @@ if Code.ensure_loaded?(Igniter) do
         # File doesn't exist, create it
         igniter =
           Igniter.Project.Module.create_module(igniter, trpc_router_module, """
-          defmodule #{inspect(trpc_router_module)} do
-            use AshRpc.Web.Router, domains: []
-          end
+          use AshRpc.Web.Router, domains: []
           """)
 
         {igniter, Map.update!(status, :created, &["#{inspect(trpc_router_module)} module" | &1])}
