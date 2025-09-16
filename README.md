@@ -1,7 +1,5 @@
 # AshRpc
 
-[![CI](https://github.com/rosaan/ash_rpc/actions/workflows/ashrpc-ci.yml/badge.svg)](https://github.com/rosaan/ash_rpc/actions/workflows/ashrpc-ci.yml)
-
 **Expose Ash Resource actions over tRPC with a Plug-compatible router/controller, robust error handling, subscriptions, and schema tooling.**
 
 AshRpc is a comprehensive bridge between [Ash Framework](https://ash-hq.org) and [tRPC](https://trpc.io), enabling you to expose your Ash resources as type-safe, performant tRPC endpoints. It provides seamless integration with Phoenix applications, automatic TypeScript generation, and advanced features like real-time subscriptions, field selection, and batching.
