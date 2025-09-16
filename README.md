@@ -50,6 +50,11 @@ AshRpc is a comprehensive bridge between [Ash Framework](https://ash-hq.org) and
 ### 1. Install AshRpc
 
 ```bash
+# If you have Igniter installed (recommended)
+mix igniter.install ash_rpc
+
+# Or manually install
+mix deps.get
 mix ash_rpc.install
 ```
 
