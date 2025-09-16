@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3
+
+### Fixed Validation Error Messages
+
+- **Fixed Generic Error Messages**: Validation errors now show specific messages (e.g., "Password must be between 8 and 100 characters") instead of generic "TodoApp" messages
+- **Improved InvalidChanges Error Handling**: Better extraction of nested validation errors for clearer error reporting
+
 ## 0.1.2
 
 ### Enhanced Error Handling

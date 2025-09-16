@@ -317,11 +317,13 @@ defmodule AshRpc.Error.ErrorBuilder do
   # Extract form validation errors from Ash errors for structured frontend consumption
   defp extract_form_validation_errors(errors) when is_list(errors) do
     errors
+    |> Enum.flat_map(&flatten_nested_errors/1)
     |> Enum.filter(fn error ->
       # Look for common Ash validation error types
       is_struct(error, Ash.Error.Changes.InvalidAttribute) or
         is_struct(error, Ash.Error.Changes.InvalidChanges) or
         is_struct(error, Ash.Error.Changes.InvalidArgument) or
+        is_struct(error, Ash.Error.Changes.Required) or
         (is_map(error) and Map.get(error, :field))
     end)
     |> Enum.reduce(%{}, fn error, acc ->
@@ -333,15 +335,94 @@ defmodule AshRpc.Error.ErrorBuilder do
     end)
   end
 
+  # Flatten nested errors from InvalidChanges structures
+  defp flatten_nested_errors(%Ash.Error.Changes.InvalidChanges{} = error) do
+    # Try to access nested errors through available fields
+    nested_errors = Map.get(error, :errors) || Map.get(error, :changes) || []
+    fields = Map.get(error, :fields)
+
+    cond do
+      # If there are nested errors, flatten them
+      is_list(nested_errors) and length(nested_errors) > 0 ->
+        [error] ++ Enum.flat_map(nested_errors, &flatten_nested_errors/1)
+
+      # If there are field-specific errors, convert them to InvalidAttribute errors
+      is_map(fields) and map_size(fields) > 0 ->
+        field_errors =
+          Enum.flat_map(fields, fn {field, messages} ->
+            message_list = if is_list(messages), do: messages, else: [messages]
+
+            Enum.map(message_list, fn message ->
+              %Ash.Error.Changes.InvalidAttribute{
+                field: field,
+                message: message
+              }
+            end)
+          end)
+
+        field_errors ++ [error]
+
+      # No nested errors, just return the error
+      true ->
+        [error]
+    end
+  end
+
+  defp flatten_nested_errors(error), do: [error]
+
   # Extract clean validation message from Ash errors using proper Ash API
   defp extract_clean_error_message(error) when is_struct(error) do
     cond do
       # For Ash validation errors, use the error's message field directly
       # This avoids the verbose breadcrumbs from Exception.message/1
-      function_exported?(error.__struct__, :message, 0) ->
-        error.message
-        |> String.trim()
-        |> String.trim_trailing(".")
+      function_exported?(error.__struct__, :message, 0) and Map.has_key?(error, :message) ->
+        case error.message do
+          msg when is_binary(msg) and msg != "" ->
+            msg
+            |> String.trim()
+            |> String.trim_trailing(".")
+
+          _ ->
+            # If message is empty, try the full exception message
+            Exception.message(error)
+            |> extract_clean_message_from_string()
+        end
+
+      # Handle InvalidChanges errors that might have nested errors
+      is_struct(error, Ash.Error.Changes.InvalidChanges) ->
+        # Try to access nested errors through the struct's fields
+        # Different Ash versions might have different field names
+        nested_errors = Map.get(error, :errors) || Map.get(error, :changes) || []
+        fields = Map.get(error, :fields)
+
+        cond do
+          # If there are nested errors, extract their messages
+          is_list(nested_errors) and length(nested_errors) > 0 ->
+            nested_messages = Enum.map(nested_errors, &extract_nested_error_message/1)
+            Enum.join(nested_messages, "; ")
+
+          # If there are field-specific errors, extract them
+          is_map(fields) and map_size(fields) > 0 ->
+            field_messages =
+              Enum.map(fields, fn {field, messages} ->
+                if is_list(messages) do
+                  "#{field}: #{Enum.join(messages, ", ")}"
+                else
+                  "#{field}: #{messages}"
+                end
+              end)
+
+            Enum.join(field_messages, "; ")
+
+          # Fallback to the error's message or exception message
+          true ->
+            if Map.get(error, :message) && Map.get(error, :message) != "" do
+              Map.get(error, :message)
+            else
+              Exception.message(error)
+              |> extract_clean_message_from_string()
+            end
+        end
 
       # Fallback to Exception.message for other error types
       true ->
@@ -351,6 +432,30 @@ defmodule AshRpc.Error.ErrorBuilder do
   end
 
   defp extract_clean_error_message(error), do: Exception.message(error)
+
+  # Extract message from nested errors within InvalidChanges
+  defp extract_nested_error_message(error) when is_struct(error) do
+    cond do
+      # Check for message field first
+      Map.has_key?(error, :message) and is_binary(error.message) ->
+        error.message
+
+      # Handle specific validation error types
+      is_struct(error, Ash.Error.Changes.InvalidAttribute) ->
+        field = Map.get(error, :field, "unknown_field")
+        "Invalid value for #{field}"
+
+      is_struct(error, Ash.Error.Changes.Required) ->
+        field = Map.get(error, :field, "unknown_field")
+        "#{field} is required"
+
+      # Try Exception.message as fallback
+      true ->
+        Exception.message(error)
+    end
+  end
+
+  defp extract_nested_error_message(error), do: inspect(error)
 
   # Extract clean message from string (fallback for non-Ash errors)
   defp extract_clean_message_from_string(message) when is_binary(message) do

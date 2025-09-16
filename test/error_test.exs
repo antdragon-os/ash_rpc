@@ -151,4 +151,77 @@ defmodule AshRpc.ErrorTest do
     # For non-form errors, we keep the original message
     assert trpc_error.message != "Validation failed"
   end
+
+  test "handles InvalidChanges errors with nested validation errors" do
+    # Mock the nested validation errors that would come from string_length validation
+    password_length_error = %Ash.Error.Changes.InvalidAttribute{
+      field: :password,
+      message: "Password must be between 8 and 100 characters"
+    }
+
+    # Create an InvalidChanges error (similar to what the user is experiencing)
+    invalid_changes_error = %Ash.Error.Changes.InvalidChanges{
+      # Simulate the error structure - we'll use the available fields
+      # Note: InvalidChanges might not have an :errors field, so we test the fallback
+    }
+
+    # Create the main ash error
+    ash_error = %Ash.Error.Invalid{
+      class: :invalid,
+      errors: [invalid_changes_error, password_length_error],
+      path: []
+    }
+
+    # Test error extraction
+    error_response = AshRpc.Error.ErrorBuilder.build_error_response(ash_error)
+    trpc_error = AshRpc.Error.Error.to_trpc_error(ash_error)
+
+    # Should extract form errors
+    assert error_response.type == "ash_error"
+    assert Map.has_key?(error_response, :form)
+
+    assert trpc_error.data.formErrors["password"] == [
+             "Password must be between 8 and 100 characters"
+           ]
+
+    # Should not have the generic "TodoApp" message
+    refute String.contains?(trpc_error.message, "TodoApp")
+    assert trpc_error.message == "Validation failed"
+  end
+
+  test "extracts validation messages from password confirmation validation" do
+    # Simulate the password confirmation validation error
+    confirmation_error = %Ash.Error.Changes.InvalidAttribute{
+      field: :password_confirmation,
+      message: "Password confirmation doesn't match"
+    }
+
+    # Simulate string length validation error
+    length_error = %Ash.Error.Changes.InvalidAttribute{
+      field: :password,
+      message: "Password must be between 8 and 100 characters"
+    }
+
+    ash_error = %Ash.Error.Invalid{
+      class: :invalid,
+      errors: [confirmation_error, length_error],
+      path: []
+    }
+
+    error_response = AshRpc.Error.ErrorBuilder.build_error_response(ash_error)
+    trpc_error = AshRpc.Error.Error.to_trpc_error(ash_error)
+
+    assert Map.has_key?(error_response, :form)
+
+    assert trpc_error.data.formErrors["password_confirmation"] == [
+             "Password confirmation doesn't match"
+           ]
+
+    assert trpc_error.data.formErrors["password"] == [
+             "Password must be between 8 and 100 characters"
+           ]
+
+    # Should provide clear validation messages, not generic ones
+    assert trpc_error.message == "Validation failed"
+  end
 end
