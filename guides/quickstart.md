@@ -46,23 +46,13 @@ For more control over the installation process:
 
 #### Step 1: Add Dependencies
 
-Add AshRpc and recommended dependencies to your `mix.exs`:
+Add AshRpc to your `mix.exs`:
 
 ```elixir
 defp deps do
   [
-    # Required
+    ...,
     {:ash_rpc, "~> 0.1"},
-    {:ash, "~> 3.0"},
-    {:spark, "~> 2.0"},
-
-    # Recommended for full functionality
-    {:ash_authentication, "~> 3.0"},     # Authentication support
-    {:ash_phoenix, "~> 2.0"},            # Phoenix integration
-
-    # Optional but useful
-    {:phoenix_pubsub, ">= 2.1.0"},       # For subscriptions
-    {:jason, "~> 1.4"},                  # JSON encoding
   ]
 end
 ```
@@ -405,17 +395,12 @@ Once installation is complete:
    mix ash_rpc.codegen --output=./frontend/generated --zod
    ```
 
-2. **Configure Frontend Client** (see [Frontend Integration Guide](frontend_integration.md))
-
-3. **Set Up Authentication** (see [Authentication Guide](authentication.md))
-
-4. **Explore Advanced Features** (see [Advanced Features Guide](advanced_features.md))
+2. **Set Up Authentication** (see [Authentication Guide](authentication.md))
 
 ## Support
 
 If you encounter issues during installation:
 
 - Check the [troubleshooting section](#troubleshooting) above
-- Review the [examples](examples.md) guide
 - Open an issue on [GitHub](https://github.com/antdragon-os/ash_rpc/issues)
 - Join the discussion on [GitHub Discussions](https://github.com/antdragon-os/ash_rpc/discussions)

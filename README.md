@@ -1,8 +1,8 @@
 # AshRpc
 
-**Expose Ash Resource actions over tRPC with a Plug-compatible router/controller, robust error handling, subscriptions, and schema tooling.**
+**Expose Ash Resource actions over tRPC with a Plug-compatible router/controller, robust error handling, and schema tooling.**
 
-AshRpc is a comprehensive bridge between [Ash Framework](https://ash-hq.org) and [tRPC](https://trpc.io), enabling you to expose your Ash resources as type-safe, performant tRPC endpoints. It provides seamless integration with Phoenix applications, automatic TypeScript generation, and advanced features like real-time subscriptions, field selection, and batching.
+AshRpc is a comprehensive bridge between [Ash Framework](https://ash-hq.org) and [tRPC](https://trpc.io), enabling you to expose your Ash resources as type-safe, performant tRPC endpoints. It provides seamless integration with Phoenix applications, automatic TypeScript generation, and advanced features like field selection and batching.
 
 > ⚠️ **EXPERIMENTAL WARNING**: This package is still in early development and considered highly experimental. Breaking changes may occur frequently without notice. We strongly advise against using this package in production environments until it reaches a stable release (v1.0.0+). Use at your own risk for development and testing purposes only.
 
@@ -14,9 +14,7 @@ AshRpc is a comprehensive bridge between [Ash Framework](https://ash-hq.org) and
 - [Backend Setup](#backend-setup)
 - [Frontend Integration](#frontend-integration)
 - [Authentication](#authentication)
-- [Advanced Features](#advanced-features)
 - [API Reference](#api-reference)
-- [Examples](#examples)
 - [Contributing](#contributing)
 
 ## Features
@@ -32,7 +30,6 @@ AshRpc is a comprehensive bridge between [Ash Framework](https://ash-hq.org) and
 ### 🔧 **Advanced Capabilities**
 
 - **Batching**: Efficient request batching with `?batch=1` support
-- **Subscriptions**: Real-time broadcasting via Phoenix.PubSub
 - **Field Selection**: Dynamic field selection with include/exclude semantics
 - **Filtering & Sorting**: Rich query capabilities with complex filter expressions
 - **Pagination**: Offset and keyset pagination with automatic detection
@@ -508,25 +505,6 @@ const users = await client.accounts.user.read.query({
 });
 ```
 
-### Subscriptions
-
-Real-time updates via Phoenix channels:
-
-```typescript
-// Backend: Enable subscriptions on resource
-trpc do
-  expose [:read, :create]
-  subscribe [:create]  # Broadcast on create actions
-end
-
-// Frontend: Subscribe to changes
-const subscription = trpc.accounts.user.onCreate.subscribe(undefined, {
-  onData: (data) => {
-    console.log("New user created:", data);
-  },
-});
-```
-
 ## TypeScript Generation
 
 ### Generate Types
@@ -628,16 +606,6 @@ end
 ```
 
 ## Examples
-
-### Complete User Management System
-
-See the `examples/` directory for complete implementations including:
-
-- User registration and authentication
-- Role-based access control
-- File uploads with progress tracking
-- Real-time notifications
-- Advanced querying with relationships
 
 ### Quick Examples
 

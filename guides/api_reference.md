@@ -559,30 +559,6 @@ defmodule AshRpc.Util.Request do
 end
 ```
 
-### AshRpc.Util.Subscriptions
-
-Subscription management utilities.
-
-```elixir
-defmodule AshRpc.Util.Subscriptions do
-  @moduledoc """
-  Utilities for managing real-time subscriptions.
-  """
-
-  @spec topic_for_resource(module(), Ash.Resource.record()) :: String.t()
-  def topic_for_resource(resource, record) do
-    # Generate topic name for resource
-    # Include relevant identifiers
-  end
-
-  @spec broadcast_change(atom(), String.t(), term()) :: :ok
-  def broadcast_change(pubsub, topic, data) do
-    # Broadcast change to subscribers
-    # Handle pubsub adapter
-  end
-end
-```
-
 ### AshRpc.Util.Codegen
 
 Code generation utilities.
