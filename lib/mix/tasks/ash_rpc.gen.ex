@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.AshRpc.Gen do
+defmodule Mix.Tasks.AshRpc.Codegen do
   @moduledoc """
   Generate a minimal TypeScript declaration for the Ash RPC router.
 
