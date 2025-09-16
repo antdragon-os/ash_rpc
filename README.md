@@ -42,8 +42,6 @@ AshRpc is a comprehensive bridge between [Ash Framework](https://ash-hq.org) and
 
 - **Auto-Generation**: TypeScript types and Zod schemas from your Ash resources
 - **IntelliSense**: Full IDE support with generated type definitions
-- **Debugging**: Comprehensive error messages and request logging
-- **Testing**: Built-in test helpers and utilities
 
 ## Quick Start
 
