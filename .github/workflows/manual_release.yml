@@ -1,138 +1,138 @@
-name: Manual Release
+# name: Manual Release
 
-on:
-  workflow_dispatch:
-    inputs:
-      version_type:
-        description: "Version bump type"
-        required: true
-        default: "patch"
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
-      custom_version:
-        description: "Custom version (optional, overrides version_type)"
-        required: false
-        type: string
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       version_type:
+#         description: "Version bump type"
+#         required: true
+#         default: "patch"
+#         type: choice
+#         options:
+#           - patch
+#           - minor
+#           - major
+#       custom_version:
+#         description: "Custom version (optional, overrides version_type)"
+#         required: false
+#         type: string
 
-jobs:
-  release:
-    name: Manual Release
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/ash_rpc
+# jobs:
+#   release:
+#     name: Manual Release
+#     runs-on: ubuntu-latest
+#     defaults:
+#       run:
+#         working-directory: packages/ash_rpc
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
 
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: "1.16"
-          otp-version: "26"
+#       - name: Set up Elixir
+#         uses: erlef/setup-beam@v1
+#         with:
+#           elixir-version: "1.16"
+#           otp-version: "26"
 
-      - name: Restore dependencies cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            packages/ash_rpc/deps
-            packages/ash_rpc/_build
-          key: ${{ runner.os }}-mix-1.16-26-${{ hashFiles('packages/ash_rpc/mix.lock') }}
+#       - name: Restore dependencies cache
+#         uses: actions/cache@v4
+#         with:
+#           path: |
+#             packages/ash_rpc/deps
+#             packages/ash_rpc/_build
+#           key: ${{ runner.os }}-mix-1.16-26-${{ hashFiles('packages/ash_rpc/mix.lock') }}
 
-      - name: Install dependencies
-        run: mix deps.get
+#       - name: Install dependencies
+#         run: mix deps.get
 
-      - name: Run pre-release checks
-        run: mix release.check
+#       - name: Run pre-release checks
+#         run: mix release.check
 
-      - name: Determine version
-        id: version
-        run: |
-          if [ -n "${{ inputs.custom_version }}" ]; then
-            echo "version=${{ inputs.custom_version }}" >> $GITHUB_OUTPUT
-          else
-            # Get current version
-            CURRENT_VERSION=$(mix run -e "IO.puts Mix.Project.config()[:version]" | tail -1)
+#       - name: Determine version
+#         id: version
+#         run: |
+#           if [ -n "${{ inputs.custom_version }}" ]; then
+#             echo "version=${{ inputs.custom_version }}" >> $GITHUB_OUTPUT
+#           else
+#             # Get current version
+#             CURRENT_VERSION=$(mix run -e "IO.puts Mix.Project.config()[:version]" | tail -1)
 
-            # Parse version components
-            IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
-            MAJOR=${VERSION_PARTS[0]}
-            MINOR=${VERSION_PARTS[1]}
-            PATCH=${VERSION_PARTS[2]}
+#             # Parse version components
+#             IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+#             MAJOR=${VERSION_PARTS[0]}
+#             MINOR=${VERSION_PARTS[1]}
+#             PATCH=${VERSION_PARTS[2]}
 
-            case "${{ inputs.version_type }}" in
-              patch)
-                NEW_PATCH=$((PATCH + 1))
-                NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
-                ;;
-              minor)
-                NEW_MINOR=$((MINOR + 1))
-                NEW_VERSION="$MAJOR.$NEW_MINOR.0"
-                ;;
-              major)
-                NEW_MAJOR=$((MAJOR + 1))
-                NEW_VERSION="$NEW_MAJOR.0.0"
-                ;;
-            esac
+#             case "${{ inputs.version_type }}" in
+#               patch)
+#                 NEW_PATCH=$((PATCH + 1))
+#                 NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+#                 ;;
+#               minor)
+#                 NEW_MINOR=$((MINOR + 1))
+#                 NEW_VERSION="$MAJOR.$NEW_MINOR.0"
+#                 ;;
+#               major)
+#                 NEW_MAJOR=$((MAJOR + 1))
+#                 NEW_VERSION="$NEW_MAJOR.0.0"
+#                 ;;
+#             esac
 
-            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          fi
+#             echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+#           fi
 
-      - name: Update version in mix.exs
-        run: |
-          sed -i "s/@version \".*\"/@version \"${{ steps.version.outputs.version }}\"/" mix.exs
+#       - name: Update version in mix.exs
+#         run: |
+#           sed -i "s/@version \".*\"/@version \"${{ steps.version.outputs.version }}\"/" mix.exs
 
-      - name: Generate docs
-        run: mix docs
+#       - name: Generate docs
+#         run: mix docs
 
-      - name: Commit version bump
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add mix.exs
-          git commit -m "Bump version to ${{ steps.version.outputs.version }}"
+#       - name: Commit version bump
+#         run: |
+#           git config --local user.email "action@github.com"
+#           git config --local user.name "GitHub Action"
+#           git add mix.exs
+#           git commit -m "Bump version to ${{ steps.version.outputs.version }}"
 
-      - name: Create and push tag
-        run: |
-          git tag "v${{ steps.version.outputs.version }}"
-          git push origin "v${{ steps.version.outputs.version }}"
+#       - name: Create and push tag
+#         run: |
+#           git tag "v${{ steps.version.outputs.version }}"
+#           git push origin "v${{ steps.version.outputs.version }}"
 
-      - name: Publish to Hex
-        run: mix hex.publish --yes
-        env:
-          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+#       - name: Publish to Hex
+#         run: mix hex.publish --yes
+#         env:
+#           HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
 
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.version.outputs.version }}
-          release_name: Release v${{ steps.version.outputs.version }}
-          body: |
-            ## Changes
+#       - name: Create GitHub Release
+#         uses: actions/create-release@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           tag_name: v${{ steps.version.outputs.version }}
+#           release_name: Release v${{ steps.version.outputs.version }}
+#           body: |
+#             ## Changes
 
-            See [CHANGELOG.md](https://github.com/rosaan/ash_rpc/blob/main/packages/ash_rpc/CHANGELOG.md) for details.
+#             See [CHANGELOG.md](https://github.com/rosaan/ash_rpc/blob/main/packages/ash_rpc/CHANGELOG.md) for details.
 
-            ## Installation
+#             ## Installation
 
-            ```elixir
-            def deps do
-              [
-                {:ash_rpc, "~> ${{ steps.version.outputs.version }}"}
-              ]
-            end
-            ```
+#             ```elixir
+#             def deps do
+#               [
+#                 {:ash_rpc, "~> ${{ steps.version.outputs.version }}"}
+#               ]
+#             end
+#             ```
 
-            ## Documentation
+#             ## Documentation
 
-            - [HexDocs](https://hexdocs.pm/ash_rpc)
-            - [GitHub Repository](https://github.com/rosaan/ash_rpc)
-          draft: false
-          prerelease: false
+#             - [HexDocs](https://hexdocs.pm/ash_rpc)
+#             - [GitHub Repository](https://github.com/rosaan/ash_rpc)
+#           draft: false
+#           prerelease: false
