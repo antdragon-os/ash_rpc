@@ -6,13 +6,13 @@ optionally Zod schemas for inputs.
 Basic usage:
 
 ```
-mix ash_rpc.gen --output=./frontend/generated
+mix ash_rpc.codegen --output=./frontend/generated
 ```
 
 Also generate Zod schemas:
 
 ```
-mix ash_rpc.gen --output=./frontend/generated --zod
+mix ash_rpc.codegen --output=./frontend/generated --zod
 ```
 
 Options

@@ -96,7 +96,7 @@ end
 ### 4. Generate Types
 
 ```bash
-mix ash_rpc.gen --output=./frontend/generated --zod
+mix ash_rpc.codegen --output=./frontend/generated --zod
 ```
 
 ### 5. Use in Frontend
@@ -533,10 +533,10 @@ const subscription = trpc.accounts.user.onCreate.subscribe(undefined, {
 
 ```bash
 # Generate TypeScript types
-mix ash_rpc.gen --output=./frontend/generated
+mix ash_rpc.codegen --output=./frontend/generated
 
 # Generate with Zod schemas
-mix ash_rpc.gen --output=./frontend/generated --zod
+mix ash_rpc.codegen --output=./frontend/generated --zod
 ```
 
 ### Generated Files

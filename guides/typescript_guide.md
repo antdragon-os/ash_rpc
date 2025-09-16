@@ -12,13 +12,13 @@ Generate TypeScript types for your tRPC router:
 
 ```bash
 # Generate basic types
-mix ash_rpc.gen --output=./frontend/generated
+mix ash_rpc.codegen --output=./frontend/generated
 
 # Generate types with Zod schemas
-mix ash_rpc.gen --output=./frontend/generated --zod
+mix ash_rpc.codegen --output=./frontend/generated --zod
 
 # Generate for specific domains
-mix ash_rpc.gen --output=./frontend/generated --domains=MyApp.Accounts,MyApp.Billing
+mix ash_rpc.codegen --output=./frontend/generated --domains=MyApp.Accounts,MyApp.Billing
 ```
 
 ### Generated Files

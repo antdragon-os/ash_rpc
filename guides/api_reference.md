@@ -624,19 +624,19 @@ mix ash_rpc.install
 - Configures route forwarding to `/trpc`
 - Formats generated files
 
-### mix ash_rpc.gen
+### mix ash_rpc.codegen
 
 Generates TypeScript types and Zod schemas.
 
 ```bash
 # Generate types only
-mix ash_rpc.gen --output=./frontend/generated
+mix ash_rpc.codegen --output=./frontend/generated
 
 # Generate types and Zod schemas
-mix ash_rpc.gen --output=./frontend/generated --zod
+mix ash_rpc.codegen --output=./frontend/generated --zod
 
 # Generate for specific domains
-mix ash_rpc.gen --output=./frontend/generated --domains=MyApp.Accounts,MyApp.Billing
+mix ash_rpc.codegen --output=./frontend/generated --domains=MyApp.Accounts,MyApp.Billing
 ```
 
 **Options:**

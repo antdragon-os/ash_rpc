@@ -2,7 +2,7 @@ defmodule Mix.Tasks.AshRpc.Gen do
   @moduledoc """
   Generate a minimal TypeScript declaration for the Ash RPC router.
 
-      mix ash_rpc.gen --output=./frontend/generated
+      mix ash_rpc.codegen --output=./frontend/generated
 
   Options:
     --output - directory to write `trpc.d.ts` (required)
@@ -33,6 +33,7 @@ defmodule Mix.Tasks.AshRpc.Gen do
             {:ok, domains} -> domains
             {:error, msg} -> abort!(msg)
           end
+
         str ->
           str |> String.split([",", " "], trim: true) |> Enum.map(&Module.concat([&1]))
       end
@@ -56,6 +57,6 @@ defmodule Mix.Tasks.AshRpc.Gen do
   end
 
   defp abort!(msg) do
-    Mix.raise("ash_rpc.gen: #{msg}")
+    Mix.raise("ash_rpc.codegen: #{msg}")
   end
 end

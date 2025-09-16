@@ -11,7 +11,7 @@ Before integrating AshRpc with your frontend:
 1. **Generate TypeScript Types**:
 
    ```bash
-   mix ash_rpc.gen --output=./frontend/generated --zod
+   mix ash_rpc.codegen --output=./frontend/generated --zod
    ```
 
 2. **Install Dependencies**:

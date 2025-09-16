@@ -282,7 +282,7 @@ end
 
 #### 5. TypeScript Generation Issues
 
-**Error**: `mix ash_rpc.gen` fails with module not found
+**Error**: `mix ash_rpc.codegen` fails with module not found
 
 **Solutions**:
 
@@ -456,7 +456,7 @@ end
 1. **Regenerate Types**:
 
 ```bash
-mix ash_rpc.gen --output=./frontend/generated --zod
+mix ash_rpc.codegen --output=./frontend/generated --zod
 ```
 
 2. **Check for API Changes**:

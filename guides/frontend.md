@@ -16,7 +16,7 @@ npm i @trpc/client @trpc/server zod
 
 ## Create client
 
-Use the generated types from `mix ash_rpc.gen`.
+Use the generated types from `mix ash_rpc.codegen`.
 
 ```ts
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
@@ -75,7 +75,7 @@ try {
 
 ## Zod schemas (optional)
 
-If you invoked `mix ash_rpc.gen --zod`, a `trpc.zod.ts` file is generated with composable input schemas
+If you invoked `mix ash_rpc.codegen --zod`, a `trpc.zod.ts` file is generated with composable input schemas
 based on your resources and actions.
 
 ```ts
