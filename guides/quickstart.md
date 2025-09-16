@@ -405,7 +405,7 @@ Once installation is complete:
    mix ash_rpc.gen --output=./frontend/generated --zod
    ```
 
-2. **Configure Frontend Client** (see [Frontend Integration Guide](frontend.md))
+2. **Configure Frontend Client** (see [Frontend Integration Guide](frontend_integration.md))
 
 3. **Set Up Authentication** (see [Authentication Guide](authentication.md))
 
@@ -416,6 +416,6 @@ Once installation is complete:
 If you encounter issues during installation:
 
 - Check the [troubleshooting section](#troubleshooting) above
-- Review the [examples](../examples/) directory
+- Review the [examples](examples.md) guide
 - Open an issue on [GitHub](https://github.com/antdragon-os/ash_rpc/issues)
 - Join the discussion on [GitHub Discussions](https://github.com/antdragon-os/ash_rpc/discussions)

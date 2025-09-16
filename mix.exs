@@ -94,7 +94,15 @@ defmodule Ashrpc.MixProject do
         "guides/router.md",
         "guides/generator.md",
         "guides/frontend.md",
-        "guides/errors.md"
+        "guides/frontend_integration.md",
+        "guides/errors.md",
+        "guides/authentication.md",
+        "guides/advanced_features.md",
+        "guides/examples.md",
+        "guides/api_reference.md",
+        "guides/error_handling.md",
+        "guides/migration_troubleshooting.md",
+        "guides/typescript_guide.md"
       ]
     ]
   end

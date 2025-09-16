@@ -718,68 +718,6 @@ mix docs
 open doc/index.html
 ```
 
-## Development & Release
-
-### Local Development
-
-```bash
-# Run tests
-mix test
-
-# Run pre-commit checks
-mix precommit
-
-# Generate documentation
-mix docs
-
-# Dry-run Hex publish
-mix hex.publish.dry_run
-```
-
-### Publishing to Hex
-
-The package includes automated CI/CD pipelines:
-
-#### Automated Release (Recommended)
-
-1. Create a git tag: `git tag v0.1.1 && git push origin v0.1.1`
-2. GitHub Actions will automatically publish to Hex
-
-#### Manual Release
-
-```bash
-# Quick publish (requires Hex auth)
-mix hex.publish
-
-# Full release with version management
-./bin/release.sh
-
-# Local testing
-./bin/publish_local.sh
-```
-
-#### GitHub Actions Manual Release
-
-- Go to Actions → Manual Release → Run workflow
-- Choose version bump type (patch/minor/major)
-- Or specify custom version
-
-### Release Scripts
-
-The package includes helper scripts in the `bin/` directory:
-
-- **`bin/release.sh`**: Interactive release script with version management
-- **`bin/publish_local.sh`**: Quick publish script for testing
-
-### CI/CD Workflows
-
-- **CI**: Runs tests on multiple Elixir/OTP versions
-- **Release**: Automatically publishes on git tags
-- **Manual Release**: UI-triggered releases with version bumping
-- **Docs**: Auto-deploys documentation to GitHub Pages
-
-See [RELEASING.md](RELEASING.md) for detailed release instructions.
-
 ## License
 
 Apache 2.0 - see `LICENSE`.
