@@ -156,8 +156,6 @@ defmodule AshRpc.Execution.Executor do
         (action.arguments || []) |> Enum.map(& &1.name)
       rescue
         _error ->
-          IO.puts("DEBUG: action.arguments details: #{inspect(action.arguments, limit: :infinity)}")
-
           []
       end
 
@@ -213,10 +211,6 @@ defmodule AshRpc.Execution.Executor do
                 Map.get(input, key)
 
               is_atom(key) and Map.has_key?(input, Atom.to_string(key)) ->
-                IO.puts(
-                  "DEBUG: Found string version of key #{inspect(Atom.to_string(key))} in input"
-                )
-
                 Map.get(input, Atom.to_string(key))
 
               true ->
@@ -657,10 +651,6 @@ defmodule AshRpc.Execution.Executor do
         end
     end
   end
-
-
-
-
 
   defp forbidden_read_error?(%Ash.Error.Forbidden{}), do: true
   defp forbidden_read_error?(%Ash.Error.Forbidden.Policy{}), do: true
