@@ -314,17 +314,104 @@ defmodule AshRpc.Error.ErrorBuilder do
     end
   end
 
+  # Extract form validation errors from Ash errors for structured frontend consumption
+  defp extract_form_validation_errors(errors) when is_list(errors) do
+    errors
+    |> Enum.filter(fn error ->
+      # Look for common Ash validation error types
+      is_struct(error, Ash.Error.Changes.InvalidAttribute) or
+        is_struct(error, Ash.Error.Changes.InvalidChanges) or
+        is_struct(error, Ash.Error.Changes.InvalidArgument) or
+        (is_map(error) and Map.get(error, :field))
+    end)
+    |> Enum.reduce(%{}, fn error, acc ->
+      field_name = extract_field_name(error)
+      error_message = extract_clean_error_message(error)
+
+      # Group errors by field name
+      Map.update(acc, field_name, [error_message], &(&1 ++ [error_message]))
+    end)
+  end
+
+  # Extract clean validation message from Ash errors using proper Ash API
+  defp extract_clean_error_message(error) when is_struct(error) do
+    cond do
+      # For Ash validation errors, use the error's message field directly
+      # This avoids the verbose breadcrumbs from Exception.message/1
+      function_exported?(error.__struct__, :message, 0) ->
+        error.message
+        |> String.trim()
+        |> String.trim_trailing(".")
+
+      # Fallback to Exception.message for other error types
+      true ->
+        Exception.message(error)
+        |> extract_clean_message_from_string()
+    end
+  end
+
+  defp extract_clean_error_message(error), do: Exception.message(error)
+
+  # Extract clean message from string (fallback for non-Ash errors)
+  defp extract_clean_message_from_string(message) when is_binary(message) do
+    # For Ash errors, look for the actual validation message pattern
+    case Regex.run(~r/Invalid value provided for [^:]+: ([^\n\.]+)/, message) do
+      [_, clean_message] ->
+        clean_message
+        |> String.trim()
+
+      _ ->
+        # Look for other Ash error patterns
+        case Regex.run(~r/: ([^\n\.]+)(?:\.|\n)/, message) do
+          [_, clean_message] -> String.trim(clean_message)
+          _ -> message
+        end
+    end
+  end
+
+  defp extract_field_name(%{field: field}) when not is_nil(field), do: to_string(field)
+  defp extract_field_name(%{attribute: attr}) when not is_nil(attr), do: to_string(attr)
+  defp extract_field_name(%{argument: arg}) when not is_nil(arg), do: to_string(arg)
+  defp extract_field_name(_), do: "general"
+
+  # Check if errors contain form validation errors that should be structured
+  defp has_form_validation_errors?(errors) when is_list(errors) do
+    Enum.any?(errors, fn error ->
+      is_struct(error, Ash.Error.Changes.InvalidAttribute) or
+        is_struct(error, Ash.Error.Changes.InvalidChanges) or
+        is_struct(error, Ash.Error.Changes.InvalidArgument) or
+        (is_map(error) and Map.get(error, :field))
+    end)
+  end
+
+  defp has_form_validation_errors?(_), do: false
+
   # Build error responses for Ash framework errors
   defp build_ash_error_response(ash_error) when is_exception(ash_error) do
-    %{
+    # Extract form validation errors if they exist
+    form_errors =
+      if has_form_validation_errors?(ash_error.errors || []) do
+        extract_form_validation_errors(ash_error.errors)
+      else
+        %{}
+      end
+
+    base_response = %{
       type: "ash_error",
-      message: Exception.message(ash_error),
+      message: extract_clean_error_message(ash_error),
       details: %{
         class: ash_error.class,
         errors: serialize_nested_errors(ash_error.errors || []),
         path: ash_error.path || []
       }
     }
+
+    # Add form validation structure if we have form errors
+    if map_size(form_errors) > 0 do
+      Map.put(base_response, :form, form_errors)
+    else
+      base_response
+    end
   end
 
   defp build_ash_error_response(ash_error) do
@@ -344,7 +431,7 @@ defmodule AshRpc.Error.ErrorBuilder do
   defp serialize_single_error(error) when is_exception(error) do
     %{
       type: error.__struct__ |> Module.split() |> List.last(),
-      message: Exception.message(error)
+      message: extract_clean_error_message(error)
     }
   end
 

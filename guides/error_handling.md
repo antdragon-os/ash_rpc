@@ -8,7 +8,9 @@ This guide covers comprehensive error handling in AshRpc applications, including
 
 ### tRPC Error Structure
 
-AshRpc returns tRPC-compliant error envelopes with detailed information:
+AshRpc returns tRPC-compliant error envelopes with detailed information.
+
+> **Note**: Form validation errors are now available at `error.data.formErrors` (TypeScript types updated accordingly).
 
 ```typescript
 interface TRPCError {
@@ -17,6 +19,7 @@ interface TRPCError {
   data: {
     code: string; // Specific error code
     httpStatus: number; // HTTP status code
+    formErrors?: Record<string, string[]>; // Field validation errors (only present when validation fails)
     details?: Array<{
       // Detailed error breakdown
       message: string; // Specific error message
@@ -37,18 +40,26 @@ interface TRPCError {
     "code": -32600,
     "message": "Validation failed",
     "data": {
-      "code": "VALIDATION_ERROR",
+      "code": "ash_error",
       "httpStatus": 400,
+      "formErrors": {
+        "email": ["has already been taken"],
+        "password": ["must be at least 8 characters"]
+      },
       "details": [
         {
-          "message": "Email is required",
-          "code": "missing_required_parameter",
-          "pointer": "email"
-        },
-        {
-          "message": "Password must be at least 8 characters",
-          "code": "field_validation_error",
-          "pointer": "password"
+          "message": "has already been taken",
+          "type": "ash_error",
+          "details": {
+            "path": [],
+            "errors": [
+              {
+                "message": "has already been taken",
+                "type": "InvalidAttribute"
+              }
+            ],
+            "class": "invalid"
+          }
         }
       ]
     }
@@ -248,24 +259,10 @@ function UserForm() {
       setFieldErrors({});
       setGeneralError("");
 
-      const details = error.shape?.data?.details || [];
-
-      details.forEach((detail: any) => {
-        if (detail.pointer) {
-          // Field-specific error
-          setFieldErrors((prev) => ({
-            ...prev,
-            [detail.pointer]: detail.message,
-          }));
-        } else {
-          // General error
-          setGeneralError(detail.message);
-        }
-      });
-
-      // Fallback for high-level error message
-      if (details.length === 0) {
-        setGeneralError(error.shape?.message || "An error occurred");
+      if (error.data?.formErrors) {
+        setFieldErrors(error.data.formErrors);
+      } else {
+        setGeneralError(error.message || "An error occurred");
       }
     },
   });

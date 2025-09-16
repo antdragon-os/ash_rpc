@@ -34,14 +34,37 @@ defmodule AshRpc.Error.Error do
     # Map the structured error to tRPC format
     {trpc_code, http_status} = map_error_to_codes(error_response.type, error)
 
+    # Flatten the structure for easier frontend consumption
+    base_data = %{
+      code: error_response.type,
+      httpStatus: http_status
+    }
+
+    # Add form errors directly to the data root if they exist
+    # Use 'formErrors' for clarity - this field only appears when there are validation errors
+    data =
+      if Map.has_key?(error_response, :form) do
+        Map.put(base_data, :formErrors, error_response.form)
+      else
+        base_data
+      end
+
+    # Add minimal details for debugging (without redundant form data)
+    debug_details = Map.drop(error_response, [:form])
+    data = Map.put(data, :details, [debug_details])
+
+    # Use a more generic message when form errors are present
+    final_message =
+      if Map.has_key?(error_response, :form) do
+        "Validation failed"
+      else
+        error_response.message
+      end
+
     %{
       code: trpc_code,
-      message: error_response.message,
-      data: %{
-        code: error_response.type,
-        httpStatus: http_status,
-        details: [error_response]
-      }
+      message: final_message,
+      data: data
     }
   end
 

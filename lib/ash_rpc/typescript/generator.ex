@@ -15,8 +15,13 @@ defmodule AshRpc.TypeScript.Generator do
     # Precompute field aliases for all exposed resources
     resources_for_aliases = ResourceUtils.get_resources_for_aliases(domains)
 
-    field_aliases = resources_for_aliases |> Enum.map(&SchemaGenerator.generate_fields_alias/1) |> Enum.join("\n")
-    nested_aliases = resources_for_aliases |> Enum.map(&SchemaGenerator.generate_nested_query_alias/1) |> Enum.join("\n")
+    field_aliases =
+      resources_for_aliases |> Enum.map(&SchemaGenerator.generate_fields_alias/1) |> Enum.join("\n")
+
+    nested_aliases =
+      resources_for_aliases
+      |> Enum.map(&SchemaGenerator.generate_nested_query_alias/1)
+      |> Enum.join("\n")
 
     blocks = generate_domain_blocks(domains)
 
@@ -44,6 +49,19 @@ defmodule AshRpc.TypeScript.Generator do
           httpStatus: number;
           path?: string;
           stack?: string;
+          formErrors?: Record<string, string[]>;
+          details?: Array<{
+            type: string;
+            message: string;
+            details?: {
+              class: string;
+              path: string[];
+              errors: Array<{
+                type: string;
+                message: string;
+              }>;
+            };
+          }>;
         };
         message: string;
         code: _trpc_server_dist_unstable_core_do_not_import.TRPC_ERROR_CODE_NUMBER;
@@ -66,37 +84,42 @@ defmodule AshRpc.TypeScript.Generator do
     """
 
     # Generate nested structure
-    domain_blocks = Enum.map(domains, fn domain ->
-      domain_name = ResourceUtils.domain_segment(domain)
-      resources = Ash.Domain.Info.resources(domain)
-      |> Enum.filter(&ResourceUtils.exposed_resource?/1)
+    domain_blocks =
+      Enum.map(domains, fn domain ->
+        domain_name = ResourceUtils.domain_segment(domain)
 
-      resource_blocks = Enum.map(resources, fn resource ->
-        resource_name = ResourceUtils.resource_segment(resource)
-        schemas = ZodGenerator.generate_domain_schemas_for_resource(resource)
+        resources =
+          Ash.Domain.Info.resources(domain)
+          |> Enum.filter(&ResourceUtils.exposed_resource?/1)
 
-        if schemas != [] do
-          schema_lines = Enum.map(schemas, fn schema -> "      #{schema}" end)
-          "#{resource_name}: {\n#{Enum.join(schema_lines, ",\n")}\n    }"
+        resource_blocks =
+          Enum.map(resources, fn resource ->
+            resource_name = ResourceUtils.resource_segment(resource)
+            schemas = ZodGenerator.generate_domain_schemas_for_resource(resource)
+
+            if schemas != [] do
+              schema_lines = Enum.map(schemas, fn schema -> "      #{schema}" end)
+              "#{resource_name}: {\n#{Enum.join(schema_lines, ",\n")}\n    }"
+            else
+              nil
+            end
+          end)
+          |> Enum.reject(&is_nil/1)
+
+        if resource_blocks != [] do
+          "export const #{domain_name} = {\n#{Enum.join(resource_blocks, ",\n")}\n};"
         else
           nil
         end
       end)
       |> Enum.reject(&is_nil/1)
 
-      if resource_blocks != [] do
-        "export const #{domain_name} = {\n#{Enum.join(resource_blocks, ",\n")}\n};"
+    body =
+      if domain_blocks == [] do
+        ""
       else
-        nil
+        "\n" <> Enum.join(domain_blocks, "\n\n") <> "\n"
       end
-    end)
-    |> Enum.reject(&is_nil/1)
-
-    body = if domain_blocks == [] do
-      ""
-    else
-      "\n" <> Enum.join(domain_blocks, "\n\n") <> "\n"
-    end
 
     header <> body
   end
@@ -172,10 +195,12 @@ defmodule AshRpc.TypeScript.Generator do
 
     cond do
       is_nil(act) ->
-        proc = case spec.method do
-          :query -> "_trpc_server.TRPCQueryProcedure"
-          :mutation -> "_trpc_server.TRPCMutationProcedure"
-        end
+        proc =
+          case spec.method do
+            :query -> "_trpc_server.TRPCQueryProcedure"
+            :mutation -> "_trpc_server.TRPCMutationProcedure"
+          end
+
         "      #{name}: #{proc}<{input: void; output: unknown; meta: object }>;"
 
       true ->
@@ -183,10 +208,11 @@ defmodule AshRpc.TypeScript.Generator do
 
         output = get_response_type(base_output, act, spec, is_infinite_query)
 
-        proc = case spec.method do
-          :query -> "_trpc_server.TRPCQueryProcedure"
-          :mutation -> "_trpc_server.TRPCMutationProcedure"
-        end
+        proc =
+          case spec.method do
+            :query -> "_trpc_server.TRPCQueryProcedure"
+            :mutation -> "_trpc_server.TRPCMutationProcedure"
+          end
 
         fields_alias = SchemaGenerator.fields_alias_name(resource)
         input_type = TypeUtils.ts_action_input_with_query(resource, act, spec)
