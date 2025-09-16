@@ -674,7 +674,7 @@ const posts = await client.blog.post.read.query({
 ### Development Setup
 
 ```bash
-git clone https://github.com/ash-project/ash_rpc.git
+git clone https://github.com/antdragon-os/ash_rpc.git
 cd ash_rpc
 mix deps.get
 mix test
