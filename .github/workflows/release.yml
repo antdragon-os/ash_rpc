@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+    paths:
+      - "packages/ash_rpc/**"
+
+jobs:
+  publish:
+    name: Publish to Hex
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/ash_rpc
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16"
+          otp-version: "26"
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/ash_rpc/deps
+            packages/ash_rpc/_build
+          key: ${{ runner.os }}-mix-1.16-26-${{ hashFiles('packages/ash_rpc/mix.lock') }}
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run pre-release checks
+        run: mix release.check
+
+      - name: Generate docs
+        run: mix docs
+
+      - name: Publish to Hex
+        run: mix hex.publish --yes
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            ## Changes
+
+            See [CHANGELOG.md](https://github.com/rosaan/ash_rpc/blob/main/packages/ash_rpc/CHANGELOG.md) for details.
+
+            ## Installation
+
+            ```elixir
+            def deps do
+              [
+                {:ash_rpc, "~> 0.1"}
+              ]
+            end
+            ```
+
+            ## Documentation
+
+            - [HexDocs](https://hexdocs.pm/ash_rpc)
+            - [GitHub Repository](https://github.com/rosaan/ash_rpc)
+          draft: false
+          prerelease: false
