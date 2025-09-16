@@ -703,7 +703,7 @@ const posts = await client.blog.post.read.query({
 ### Development Setup
 
 ```bash
-git clone https://github.com/rosaan/ash_rpc.git
+git clone https://github.com/ash-project/ash_rpc.git
 cd ash_rpc
 mix deps.get
 mix test
@@ -786,8 +786,8 @@ Apache 2.0 - see `LICENSE`.
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/rosaan/ash_rpc/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/rosaan/ash_rpc/discussions)
+- **Issues**: [GitHub Issues](https://github.com/antdragon-os/ash_rpc/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/antdragon-os/ash_rpc/discussions)
 - **Documentation**: [HexDocs](https://hexdocs.pm/ash_rpc)
 
 ---

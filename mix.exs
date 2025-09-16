@@ -2,7 +2,7 @@ defmodule Ashrpc.MixProject do
   use Mix.Project
 
   @version "0.1.0"
-  @source_url "https://github.com/rosaan/ash_rpc"
+  @source_url "https://github.com/antdragon-os/ash_rpc"
 
   def project do
     [
@@ -36,7 +36,7 @@ defmodule Ashrpc.MixProject do
         "release.check": [
           "deps.get",
           "compile",
-          "test",
+          "cmd MIX_ENV=test mix test",
           "docs"
         ]
       ],
@@ -76,7 +76,7 @@ defmodule Ashrpc.MixProject do
         "GitHub" => @source_url,
         "HexDocs" => "https://hexdocs.pm/ash_rpc"
       },
-      maintainers: ["rosaan"],
+      maintainers: ["Rosaan Ramasamy"],
       source_url: @source_url
     ]
   end
@@ -86,6 +86,7 @@ defmodule Ashrpc.MixProject do
       main: "readme",
       source_url: @source_url,
       source_ref: "v#{@version}",
+      authors: ["Rosaan Ramasamy"],
       extras: [
         "README.md",
         "CHANGELOG.md",
@@ -93,9 +94,7 @@ defmodule Ashrpc.MixProject do
         "guides/router.md",
         "guides/generator.md",
         "guides/frontend.md",
-        "guides/errors.md",
-        "guides/subscriptions.md",
-        "guides/schema_generation.md"
+        "guides/errors.md"
       ]
     ]
   end

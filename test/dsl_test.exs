@@ -1,51 +1,52 @@
 defmodule AshRpc.DslTest.Resource do
   use Ash.Resource,
+    domain: nil,
     data_layer: Ash.DataLayer.Ets,
     extensions: [AshRpc]
 
   ets do
-    private? true
+    private?(true)
   end
 
   attributes do
-    uuid_primary_key :id
-    attribute :email, :string
+    uuid_primary_key(:id)
+    attribute(:email, :string)
   end
 
   actions do
-    defaults [:read, :create, :update]
+    defaults([:read, :create, :update])
 
     read :get_by_email do
-      argument :email, :string, allow_nil?: false
-      get? true
+      argument(:email, :string, allow_nil?: false)
+      get?(true)
     end
 
     create :register_with_password do
-      accept [:email]
+      accept([:email])
     end
   end
 
-  trpc do
+  ash_rpc do
     query :read do
-      sortable false
-      relationships [:profile]
+      sortable(false)
+      relationships([:profile])
     end
 
     query :get_by_email, :get_by_email do
-      filterable false
-      selectable true
+      filterable(false)
+      selectable(true)
     end
 
     mutation :create do
-      metadata fn _subject, _result, _ctx ->
+      metadata(fn _subject, _result, _ctx ->
         %{created: true}
-      end
+      end)
     end
 
     mutation :register, :register_with_password do
-      metadata fn _subject, _result, _ctx ->
+      metadata(fn _subject, _result, _ctx ->
         %{registered: true}
-      end
+      end)
     end
   end
 end

@@ -417,5 +417,5 @@ If you encounter issues during installation:
 
 - Check the [troubleshooting section](#troubleshooting) above
 - Review the [examples](../examples/) directory
-- Open an issue on [GitHub](https://github.com/rosaan/ash_rpc/issues)
-- Join the discussion on [GitHub Discussions](https://github.com/rosaan/ash_rpc/discussions)
+- Open an issue on [GitHub](https://github.com/antdragon-os/ash_rpc/issues)
+- Join the discussion on [GitHub Discussions](https://github.com/antdragon-os/ash_rpc/discussions)

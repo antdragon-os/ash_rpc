@@ -57,7 +57,7 @@
 #           body: |
 #             ## Changes
 
-#             See [CHANGELOG.md](https://github.com/rosaan/ash_rpc/blob/main/packages/ash_rpc/CHANGELOG.md) for details.
+#             See [CHANGELOG.md](https://github.com/antdragon-os/ash_rpc/blob/main/packages/ash_rpc/CHANGELOG.md) for details.
 
 #             ## Installation
 
@@ -72,6 +72,6 @@
 #             ## Documentation
 
 #             - [HexDocs](https://hexdocs.pm/ash_rpc)
-#             - [GitHub Repository](https://github.com/rosaan/ash_rpc)
+#             - [GitHub Repository](https://github.com/antdragon-os/ash_rpc)
 #           draft: false
 #           prerelease: false

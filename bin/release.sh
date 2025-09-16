@@ -137,6 +137,6 @@ echo "  - Notify your team about the new release"
 if command -v open &> /dev/null; then
     read -p "Open GitHub releases page? (y/N): " open_gh
     if [[ $open_gh =~ ^[Yy]$ ]]; then
-        open "https://github.com/rosaan/ash_rpc/releases/new?tag=v$NEW_VERSION&title=Release%20v$NEW_VERSION"
+        open "https://github.com/antdragon-os/ash_rpc/releases/new?tag=v$NEW_VERSION&title=Release%20v$NEW_VERSION"
     fi
 fi

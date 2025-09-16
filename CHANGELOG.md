@@ -2,7 +2,6 @@
 
 ## 0.1.0
 
-- Initial extraction from sandbox into standalone `ashrpc` package
 - Router, Controller, Executor, Procedure
 - Error translation and protocol under AshRpc namespace
 - Generator: `mix ash_rpc.gen` for TS types (+ optional Zod)
